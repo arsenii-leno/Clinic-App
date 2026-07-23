@@ -1,0 +1,217 @@
+Continue working on the EXISTING project.
+
+DO NOT regenerate the application.
+DO NOT rewrite the architecture.
+DO NOT create a new project.
+
+Use the existing codebase and improve it.
+
+The current application is already very good. The UI, navigation, status management, statistics, and overall architecture are solid.
+
+This is a UX refinement iteration.
+
+====================================================
+IMPORTANT
+====================================================
+
+Keep the existing architecture.
+
+Keep the existing Data Layer.
+
+Keep the repository pattern.
+
+Keep React Native + Expo.
+
+Do NOT break anything that already works.
+
+Only improve the application.
+
+====================================================
+1. ACCOUNT / SETTINGS
+====================================================
+
+On the Home screen there is currently a star icon in the top-right corner.
+
+It is currently not clickable.
+
+Turn this icon into the future Settings screen.
+
+For now implement a Settings page that contains placeholders for future integrations.
+
+This page should include sections like:
+
+• Google Sheets Integration
+• API Configuration
+• Spreadsheet ID
+• API Key / Credentials
+• Future Telegram Bot
+• About
+
+Do NOT implement Google Sheets yet.
+
+This screen is only preparation for Phase 2.
+
+====================================================
+2. REPLACE "PATIENTS" BUTTON
+====================================================
+
+On the Home screen there are four large buttons:
+
+New Appointment
+Patients
+Calendar
+Search
+
+Replace the "Patients" button with
+
+NEW PATIENT
+
+Reason:
+
+The receptionist creates new patients much more often than opening the patient list.
+
+The patient list is already accessible from the bottom navigation bar.
+
+====================================================
+3. NEW PATIENT FLOW
+====================================================
+
+This is the most important improvement.
+
+Completely redesign the patient creation workflow.
+
+Desired workflow:
+
+User presses
+
+NEW PATIENT
+
+↓
+
+Instead of immediately creating a patient, show a search field.
+
+The receptionist starts typing:
+
+first name
+last name
+phone number
+
+While typing, search existing patients instantly.
+
+If matching patients exist:
+
+Show a beautiful modal/dialog.
+
+Example:
+
+Existing patient found
+
+John Smith
+
+555-123456
+
+[Select Existing Patient]
+
+[Create New Patient]
+
+If the receptionist selects the existing patient:
+
+Immediately continue to
+
+NEW APPOINTMENT
+
+with that patient already selected.
+
+If no matching patient exists:
+
+Continue creating a brand new patient.
+
+After saving the patient,
+
+automatically open
+
+NEW APPOINTMENT
+
+with that patient already selected.
+
+The receptionist should never need to manually find the patient again.
+
+This workflow should require as few taps as possible.
+
+====================================================
+4. CALENDAR IMPROVEMENTS
+====================================================
+
+Currently the calendar occupies too much vertical space.
+
+It is difficult to see appointments.
+
+Improve the Calendar page.
+
+Requirements:
+
+• Make the calendar collapsible.
+
+OR
+
+• Reduce its height.
+
+OR
+
+• Allow smooth scrolling.
+
+The appointment list should always remain easily visible.
+
+The receptionist should quickly switch between dates and appointments.
+
+This page should feel efficient.
+
+====================================================
+5. KEEP EVERYTHING ELSE
+====================================================
+
+Do NOT redesign features that already work well.
+
+The following parts are already very good:
+
+✔ Home Dashboard
+✔ Statistics
+✔ Bottom Navigation
+✔ Search page
+✔ Status changing
+✔ Cards
+✔ General UI
+
+Only polish them if necessary.
+
+====================================================
+6. CODE QUALITY
+====================================================
+
+Maintain production-quality code.
+
+Do not duplicate logic.
+
+Reuse existing components.
+
+Follow the existing architecture.
+
+====================================================
+7. FUTURE PREPARATION
+====================================================
+
+Keep preparing the project for future Google Sheets integration.
+
+The Data Layer should remain isolated so that later we can replace LocalRepository with GoogleSheetsRepository without changing the UI.
+
+====================================================
+GOAL
+====================================================
+
+This application is for a real clinic receptionist.
+
+Every improvement should reduce the number of taps, reduce mistakes, and increase speed.
+
+Think like an experienced UX designer for medical software.
+
+Focus on usability rather than adding unnecessary features.
