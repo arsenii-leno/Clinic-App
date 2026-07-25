@@ -42,16 +42,25 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<Error | null>(null);
 
   const load = useCallback(async () => {
+    console.log('[DataContext] Starting data load...');
     setLoading(true);
     setError(null);
     try {
+      console.log('[DataContext] Fetching patients and appointments in parallel...');
       const [nextPatients, nextAppointments] = await Promise.all([
         PatientRepository.getAllPatients(),
         AppointmentRepository.getAllAppointments(),
       ]);
+      console.log('[DataContext] Load complete:', {
+        patientCount: nextPatients.length,
+        appointmentCount: nextAppointments.length,
+        patients: nextPatients,
+        appointments: nextAppointments,
+      });
       setPatients(nextPatients);
       setAppointments(sortAppointments(nextAppointments));
     } catch (loadError) {
+      console.error('[DataContext] Error loading data:', loadError);
       setError(loadError instanceof Error ? loadError : new Error('Unable to load clinic data.'));
     } finally {
       setLoading(false);
@@ -59,6 +68,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
+    console.log('[DataContext] useEffect triggered - mounting DataProvider');
     void load();
   }, [load]);
 

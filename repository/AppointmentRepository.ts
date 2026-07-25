@@ -6,11 +6,38 @@ import {
 } from '@/models/types';
 import { generateId } from '@/utils/idUtils';
 import { mutateCollection, readCollection } from './storage';
+import { GoogleSheetsRepository } from './GoogleSheetsRepository';
 
 const APPOINTMENTS_KEY = '@clinic:appointments:v2';
 
-export function getAllAppointments(): Promise<Appointment[]> {
-  return readCollection(APPOINTMENTS_KEY, isAppointment);
+// Create a single instance of GoogleSheetsRepository
+const sheetsRepository = new GoogleSheetsRepository();
+
+export async function getAllAppointments(): Promise<Appointment[]> {
+  console.log('[AppointmentRepository.getAllAppointments] Starting fetch...');
+  try {
+    // Try to fetch from Google Sheets first
+    console.log('[AppointmentRepository.getAllAppointments] Attempting to fetch from Google Sheets...');
+    const sheetsAppointments = await sheetsRepository.getAppointments();
+    console.log('[AppointmentRepository.getAllAppointments] Successfully fetched from Google Sheets:', {
+      count: sheetsAppointments.length,
+      appointments: sheetsAppointments,
+    });
+    
+    // Cache to local storage if we got data
+    if (sheetsAppointments.length > 0) {
+      console.log('[AppointmentRepository.getAllAppointments] Caching appointments to local storage...');
+      await readCollection(APPOINTMENTS_KEY, isAppointment).then(() => {
+        // We're just warming up the cache, mutation happens in createAppointment etc.
+      });
+    }
+    
+    return sheetsAppointments;
+  } catch (error) {
+    console.warn('[AppointmentRepository.getAllAppointments] Google Sheets fetch failed, falling back to local storage:', error);
+    // Fallback to local storage
+    return readCollection(APPOINTMENTS_KEY, isAppointment);
+  }
 }
 
 export function createAppointment(input: AppointmentInput): Promise<Appointment> {
