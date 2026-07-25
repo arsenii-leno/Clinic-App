@@ -1,7 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react';
 import { Patient, Appointment, AppointmentStatus } from '@/models/types';
-import * as PatientRepo from '@/repository/PatientRepository';
-import * as AppointmentRepo from '@/repository/AppointmentRepository';
+import * as PatientRepo from '@/repository/GoogleSheetsRepository';
+import * as AppointmentRepo from '@/repository/GoogleSheetsRepository';
 import { getTodayString, getTomorrowString, compareAppointments } from '@/utils/dateUtils';
 
 interface DataContextValue {
@@ -75,8 +75,11 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
 
   const removePatient = useCallback(async (id: string) => {
     await PatientRepo.deletePatient(id);
-    // Also remove associated appointments
     const appts = await AppointmentRepo.getAllAppointments();
+    const linked = appts.filter((a) => a.patientId === id);
+    for (const appt of linked) {
+      await AppointmentRepo.deleteAppointment(appt.id);
+    }
     const remaining = appts.filter((a) => a.patientId !== id);
     await AppointmentRepo.saveAllAppointments(remaining);
     setPatients((prev) => prev.filter((p) => p.id !== id));
