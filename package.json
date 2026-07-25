@@ -9,8 +9,8 @@
     "ios": "expo start --ios",
     "web": "expo start --web",
     "typecheck": "tsc --noEmit",
-    "format": "prettier --check .",
-    "format:write": "prettier --write .",
+    "format": "prettier --check app components constants context hooks models repository utils *.json *.js *.md",
+    "format:write": "prettier --write app components constants context hooks models repository utils *.json *.js *.md",
     "build": "expo export --platform all"
   },
   "dependencies": {
