@@ -1,0 +1,31 @@
+{
+  "expo": {
+    "name": "Clinic Reception",
+    "slug": "clinic-reception",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "clinic-app",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0891B2"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.clinicreception.app"
+    },
+    "android": {
+      "package": "com.clinicreception.app"
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": ["expo-router", "expo-font"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
