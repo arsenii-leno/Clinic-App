@@ -18,11 +18,11 @@
       "bundleIdentifier": "com.clinicreception.app"
     },
     "android": {
-      "package": "com.clinicreception.app",
-      "navigationBar": {
-        "visible": "adaptive",
-        "backgroundColor": "#ffffff00"
-      }
+      "package": "com.clinicreception.app"
+    },
+    "androidNavigationBar": {
+      "backgroundColor": "#00000000",
+      "visible": "sticky-immersive"
     },
     "web": {
       "favicon": "./assets/images/icon.png"
