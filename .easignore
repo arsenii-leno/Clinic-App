@@ -26,3 +26,8 @@ android/.gradle/
 # Expo
 .expo/
 dist/
+
+# Ios
+node_modules/
+ios/
+android/
