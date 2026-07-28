@@ -15,28 +15,27 @@ const sheetsRepository = new GoogleSheetsRepository();
 
 export async function getAllAppointments(): Promise<Appointment[]> {
   console.log('[AppointmentRepository.getAllAppointments] Starting fetch...');
+  const localAppointments = await readCollection(APPOINTMENTS_KEY, isAppointment);
+
   try {
-    // Try to fetch from Google Sheets first
     console.log('[AppointmentRepository.getAllAppointments] Attempting to fetch from Google Sheets...');
     const sheetsAppointments = await sheetsRepository.getAppointments();
-    console.log('[AppointmentRepository.getAllAppointments] Successfully fetched from Google Sheets:', {
-      count: sheetsAppointments.length,
-      appointments: sheetsAppointments,
-    });
-    
-    // Cache to local storage if we got data
-    if (sheetsAppointments.length > 0) {
-      console.log('[AppointmentRepository.getAllAppointments] Caching appointments to local storage...');
-      await readCollection(APPOINTMENTS_KEY, isAppointment).then(() => {
-        // We're just warming up the cache, mutation happens in createAppointment etc.
-      });
-    }
-    
-    return sheetsAppointments;
+
+    // Об'єднуємо дані: локальні перекривають Sheets
+    const appointmentMap = new Map(sheetsAppointments.map((a) => [a.id, a]));
+    localAppointments.forEach((a) => appointmentMap.set(a.id, a));
+    const merged = Array.from(appointmentMap.values());
+
+    // Оновлюємо кеш AsyncStorage
+    await mutateCollection(APPOINTMENTS_KEY, isAppointment, () => ({
+      items: merged,
+      result: undefined
+    }));
+
+    return merged;
   } catch (error) {
     console.warn('[AppointmentRepository.getAllAppointments] Google Sheets fetch failed, falling back to local storage:', error);
-    // Fallback to local storage
-    return readCollection(APPOINTMENTS_KEY, isAppointment);
+    return localAppointments;
   }
 }
 
