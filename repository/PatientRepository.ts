@@ -4,39 +4,19 @@ import { mutateCollection, readCollection } from './storage';
 import { GoogleSheetsRepository } from './GoogleSheetsRepository';
 
 const PATIENTS_KEY = '@clinic:patients:v2';
-
-// Create a single instance of GoogleSheetsRepository
 const sheetsRepository = new GoogleSheetsRepository();
 
 export async function getAllPatients(): Promise<Patient[]> {
-  console.log('[PatientRepository.getAllPatients] Starting fetch...');
-  const localPatients = await readCollection(PATIENTS_KEY, isPatient);
-
-  try {
-    console.log('[PatientRepository.getAllPatients] Attempting to fetch from Google Sheets...');
-    const sheetsPatients = await sheetsRepository.getPatients();
-
-    // Об'єднуємо дані: локальні перекривають Sheets (зберігаємо несинхронізовані нові записи)
-    const patientMap = new Map(sheetsPatients.map((p) => [p.id, p]));
-    localPatients.forEach((p) => patientMap.set(p.id, p));
-    const merged = Array.from(patientMap.values());
-
-    // Оновлюємо кеш AsyncStorage об'єднаними даними для офлайн-режиму
-    await mutateCollection(PATIENTS_KEY, isPatient, () => ({
-      items: merged,
-      result: undefined
-    }));
-
-    return merged;
-  } catch (error) {
-    console.warn('[PatientRepository.getAllPatients] Google Sheets fetch failed, falling back to local storage:', error);
-    return localPatients;
-  }
+  console.log('[PatientRepository.getAllPatients] Fetching from local storage...');
+  // Для MVP читаємо тільки з локального кешу, щоб не затерти зміни
+  return readCollection(PATIENTS_KEY, isPatient);
 }
 
-export function createPatient(input: PatientInput): Promise<Patient> {
+export async function createPatient(input: PatientInput): Promise<Patient> {
   assertPatientInput(input);
-  return mutateCollection(PATIENTS_KEY, isPatient, (patients) => {
+
+  // 1. Зберігаємо локально як Source of Truth
+  const newPatient = await mutateCollection(PATIENTS_KEY, isPatient, (patients) => {
     const now = new Date().toISOString();
     const patient: Patient = {
       ...input,
@@ -46,6 +26,13 @@ export function createPatient(input: PatientInput): Promise<Patient> {
     };
     return { items: [...patients, patient], result: patient };
   });
+
+  // 2. Фонова синхронізація в Google Sheets (не блокує UI)
+  sheetsRepository.savePatient(newPatient).catch((error) => {
+    console.error('[Sync] Failed to sync new patient to Google Sheets:', error);
+  });
+
+  return newPatient;
 }
 
 export function updatePatient(id: string, input: PatientInput): Promise<Patient> {

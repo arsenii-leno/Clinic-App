@@ -9,39 +9,18 @@ import { mutateCollection, readCollection } from './storage';
 import { GoogleSheetsRepository } from './GoogleSheetsRepository';
 
 const APPOINTMENTS_KEY = '@clinic:appointments:v2';
-
-// Create a single instance of GoogleSheetsRepository
 const sheetsRepository = new GoogleSheetsRepository();
 
 export async function getAllAppointments(): Promise<Appointment[]> {
-  console.log('[AppointmentRepository.getAllAppointments] Starting fetch...');
-  const localAppointments = await readCollection(APPOINTMENTS_KEY, isAppointment);
-
-  try {
-    console.log('[AppointmentRepository.getAllAppointments] Attempting to fetch from Google Sheets...');
-    const sheetsAppointments = await sheetsRepository.getAppointments();
-
-    // Об'єднуємо дані: локальні перекривають Sheets
-    const appointmentMap = new Map(sheetsAppointments.map((a) => [a.id, a]));
-    localAppointments.forEach((a) => appointmentMap.set(a.id, a));
-    const merged = Array.from(appointmentMap.values());
-
-    // Оновлюємо кеш AsyncStorage
-    await mutateCollection(APPOINTMENTS_KEY, isAppointment, () => ({
-      items: merged,
-      result: undefined
-    }));
-
-    return merged;
-  } catch (error) {
-    console.warn('[AppointmentRepository.getAllAppointments] Google Sheets fetch failed, falling back to local storage:', error);
-    return localAppointments;
-  }
+  console.log('[AppointmentRepository.getAllAppointments] Fetching from local storage...');
+  return readCollection(APPOINTMENTS_KEY, isAppointment);
 }
 
-export function createAppointment(input: AppointmentInput): Promise<Appointment> {
+export async function createAppointment(input: AppointmentInput): Promise<Appointment> {
   assertAppointmentInput(input);
-  return mutateCollection(APPOINTMENTS_KEY, isAppointment, (appointments) => {
+
+  // 1. Зберігаємо локально
+  const newAppointment = await mutateCollection(APPOINTMENTS_KEY, isAppointment, (appointments) => {
     const now = new Date().toISOString();
     const appointment: Appointment = {
       ...input,
@@ -51,6 +30,13 @@ export function createAppointment(input: AppointmentInput): Promise<Appointment>
     };
     return { items: [...appointments, appointment], result: appointment };
   });
+
+  // 2. Фонова синхронізація в Google Sheets
+  sheetsRepository.saveAppointment(newAppointment).catch((error) => {
+    console.error('[Sync] Failed to sync new appointment to Google Sheets:', error);
+  });
+
+  return newAppointment;
 }
 
 export function updateAppointment(id: string, input: AppointmentInput): Promise<Appointment> {
