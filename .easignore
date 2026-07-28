@@ -1,15 +1,17 @@
+# Git (ОБОВ'ЯЗКОВО! Інакше вся історія полетить на сервер)
+.git/
+
 # Dependencies
 node_modules/
 .pnpm-store/
 
-# iOS build artifacts
-ios/Pods/
-ios/build/
-ios/Pods.xcodeproj/
+# Native folders (Expo сам згенерує їх на сервері через prebuild)
+ios/
+android/
 
-# Android build artifacts
-android/build/
-android/.gradle/
+# Expo
+.expo/
+dist/
 
 # Temporary files
 .DS_Store
@@ -22,12 +24,3 @@ android/.gradle/
 .vscode/
 *.swp
 *.swo
-
-# Expo
-.expo/
-dist/
-
-# Ios
-node_modules/
-ios/
-android/
