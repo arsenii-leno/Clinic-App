@@ -12,7 +12,7 @@ import { TimePickerModal } from '@/components/TimePickerModal';
 import { PatientSelectorModal } from '@/components/PatientSelectorModal';
 import { StatusBadge } from '@/components/StatusBadge';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
-import { formatDateShort, formatTime } from '@/utils/dateUtils';
+import { formatDateShort, formatTime, getOccupiedTimeSlots } from '@/utils/dateUtils';
 import { EmptyState } from '@/components/EmptyState';
 
 const STATUSES: AppointmentStatus[] = ['scheduled', 'completed', 'cancelled', 'rescheduled'];
@@ -37,9 +37,17 @@ export default function EditAppointmentScreen() {
   const [saving, setSaving] = useState(false);
 
   const selectedPatient = getPatientById(patientId);
+  const occupiedSlots = getOccupiedTimeSlots(date, appointments, id);
+  const isTimeOccupied = occupiedSlots.includes(time);
 
   const handleSave = async () => {
     if (!selectedPatient) return;
+
+    if (isTimeOccupied) {
+      Alert.alert('Time slot taken', 'There is already an active appointment at this time.');
+      return;
+    }
+
     setSaving(true);
     try {
       await editAppointment(id, { patientId, date, time, status, notes: notes.trim() });
@@ -55,20 +63,20 @@ export default function EditAppointmentScreen() {
 
   if (!appointment) {
     return (
-      <View style={[styles.flex, { backgroundColor: colors.background }]}>
-        <EmptyState icon="calendar-outline" title="Appointment not found" />
-      </View>
+        <View style={[styles.flex, { backgroundColor: colors.background }]}>
+          <EmptyState icon="calendar-outline" title="Appointment not found" />
+        </View>
     );
   }
 
   return (
-    <View style={[styles.flex, { backgroundColor: colors.background }]}>
-      <KeyboardAwareScrollViewCompat
-        style={styles.flex}
-        contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        bottomOffset={80}
-      >
+      <View style={[styles.flex, { backgroundColor: colors.background }]}>
+        <KeyboardAwareScrollViewCompat
+            style={styles.flex}
+            contentContainerStyle={styles.content}
+            keyboardShouldPersistTaps="handled"
+            bottomOffset={80}
+        >
         {/* Patient */}
         <View style={styles.fieldWrap}>
           <Text style={[styles.label, { color: colors.foreground }]}>Patient</Text>
@@ -178,39 +186,42 @@ export default function EditAppointmentScreen() {
           />
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.saveBtn,
-            { backgroundColor: saving ? colors.mutedForeground : colors.primary },
-          ]}
-          onPress={handleSave}
-          disabled={saving}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.saveBtnText}>{saving ? 'Saving...' : 'Save Changes'}</Text>
-        </TouchableOpacity>
-      </KeyboardAwareScrollViewCompat>
+          <TouchableOpacity
+              style={[
+                styles.saveBtn,
+                { backgroundColor: saving || isTimeOccupied ? colors.mutedForeground : colors.primary },
+              ]}
+              onPress={handleSave}
+              disabled={saving || isTimeOccupied}
+              activeOpacity={0.85}
+          >
+            <Text style={styles.saveBtnText}>
+              {saving ? 'Saving...' : isTimeOccupied ? 'Time is occupied' : 'Save Changes'}
+            </Text>
+          </TouchableOpacity>
+        </KeyboardAwareScrollViewCompat>
 
-      <PatientSelectorModal
-        visible={showPatientPicker}
-        patients={patients}
-        selectedId={patientId}
-        onSelect={(p) => setPatientId(p.id)}
-        onClose={() => setShowPatientPicker(false)}
-      />
-      <DatePickerModal
-        visible={showDatePicker}
-        value={date}
-        onSelect={setDate}
-        onClose={() => setShowDatePicker(false)}
-      />
-      <TimePickerModal
-        visible={showTimePicker}
-        value={time}
-        onSelect={setTime}
-        onClose={() => setShowTimePicker(false)}
-      />
-    </View>
+        <PatientSelectorModal
+            visible={showPatientPicker}
+            patients={patients}
+            selectedId={patientId}
+            onSelect={(p) => setPatientId(p.id)}
+            onClose={() => setShowPatientPicker(false)}
+        />
+        <DatePickerModal
+            visible={showDatePicker}
+            value={date}
+            onSelect={setDate}
+            onClose={() => setShowDatePicker(false)}
+        />
+        <TimePickerModal
+            visible={showTimePicker}
+            value={time}
+            occupiedSlots={occupiedSlots}
+            onSelect={setTime}
+            onClose={() => setShowTimePicker(false)}
+        />
+      </View>
   );
 }
 

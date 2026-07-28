@@ -1,3 +1,5 @@
+import type { Appointment } from '@/models/types';
+
 const DAYS_LONG = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const MONTHS_LONG = [
   'January',
@@ -122,4 +124,31 @@ export function getTodayGreeting(): string {
   if (hour < 12) return 'Good morning';
   if (hour < 17) return 'Good afternoon';
   return 'Good evening';
+}
+
+export function hasTimeConflict(
+    date: string,
+    time: string,
+    existingAppointments: Appointment[],
+    excludeAppointmentId?: string
+): boolean {
+  return existingAppointments.some(
+      (a) =>
+          a.date === date &&
+          a.time === time &&
+          a.status !== 'cancelled' &&
+          a.id !== excludeAppointmentId
+  );
+}
+
+export function getOccupiedTimeSlots(
+    date: string,
+    existingAppointments: Appointment[],
+    excludeAppointmentId?: string
+): string[] {
+  return existingAppointments
+      .filter(
+          (a) => a.date === date && a.status !== 'cancelled' && a.id !== excludeAppointmentId
+      )
+      .map((a) => a.time);
 }

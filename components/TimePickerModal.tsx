@@ -1,9 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FlatList, Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useColors } from '@/hooks/useColors';
 import { formatTime } from '@/utils/dateUtils';
 
-// Generate time slots from 07:00 to 20:00 in 15-minute steps
 const TIME_SLOTS: string[] = [];
 for (let h = 7; h <= 20; h++) {
   for (let m = 0; m < 60; m += 15) {
@@ -14,13 +13,18 @@ for (let h = 7; h <= 20; h++) {
 interface Props {
   visible: boolean;
   value: string; // HH:MM
+  occupiedSlots?: string[];
   onSelect: (time: string) => void;
   onClose: () => void;
 }
 
-export function TimePickerModal({ visible, value, onSelect, onClose }: Props) {
+export function TimePickerModal({ visible, value, occupiedSlots = [], onSelect, onClose }: Props) {
   const colors = useColors();
   const [selected, setSelected] = useState(value || '09:00');
+
+  useEffect(() => {
+    if (visible) setSelected(value);
+  }, [visible, value]);
 
   const handleSelect = (time: string) => {
     setSelected(time);
@@ -29,58 +33,63 @@ export function TimePickerModal({ visible, value, onSelect, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View
-            style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
-          >
-            <View style={styles.header}>
-              <Text style={[styles.title, { color: colors.foreground }]}>Select Time</Text>
-              <TouchableOpacity onPress={onClose}>
-                <Text style={[styles.doneBtn, { color: colors.primary }]}>Done</Text>
-              </TouchableOpacity>
-            </View>
+      <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+        <TouchableOpacity style={styles.overlay} activeOpacity={1} onPress={onClose}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View
+                style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}
+            >
+              <View style={styles.header}>
+                <Text style={[styles.title, { color: colors.foreground }]}>Select Time</Text>
+                <TouchableOpacity onPress={onClose}>
+                  <Text style={[styles.doneBtn, { color: colors.primary }]}>Done</Text>
+                </TouchableOpacity>
+              </View>
 
-            <FlatList
-              data={TIME_SLOTS}
-              keyExtractor={(item) => item}
-              numColumns={4}
-              showsVerticalScrollIndicator={false}
-              style={{ maxHeight: 280 }}
-              contentContainerStyle={styles.grid}
-              renderItem={({ item }) => {
-                const isActive = item === selected;
-                return (
-                  <TouchableOpacity
-                    style={[
-                      styles.timeChip,
-                      { borderColor: colors.border },
-                      isActive && { backgroundColor: colors.primary, borderColor: colors.primary },
-                    ]}
-                    onPress={() => handleSelect(item)}
-                    activeOpacity={0.7}
-                  >
-                    <Text
-                      style={[
-                        styles.timeText,
-                        { color: colors.foreground },
-                        isActive && {
-                          color: colors.primaryForeground,
-                          fontFamily: 'Inter_700Bold',
-                        },
-                      ]}
-                    >
-                      {formatTime(item)}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
-          </View>
+              <FlatList
+                  data={TIME_SLOTS}
+                  keyExtractor={(item) => item}
+                  numColumns={4}
+                  showsVerticalScrollIndicator={false}
+                  style={{ maxHeight: 280 }}
+                  contentContainerStyle={styles.grid}
+                  renderItem={({ item }) => {
+                    const isOccupied = occupiedSlots.includes(item);
+                    const isActive = item === selected;
+
+                    return (
+                        <TouchableOpacity
+                            style={[
+                              styles.timeChip,
+                              { borderColor: colors.border },
+                              isActive && !isOccupied && { backgroundColor: colors.primary, borderColor: colors.primary },
+                              isOccupied && { backgroundColor: colors.background, opacity: 0.5 },
+                            ]}
+                            onPress={() => !isOccupied && handleSelect(item)}
+                            activeOpacity={isOccupied ? 1 : 0.7}
+                            disabled={isOccupied}
+                        >
+                          <Text
+                              style={[
+                                styles.timeText,
+                                { color: colors.foreground },
+                                isActive && !isOccupied && {
+                                  color: colors.primaryForeground,
+                                  fontFamily: 'Inter_700Bold',
+                                },
+                                isOccupied && { color: colors.destructive, textDecorationLine: 'line-through' },
+                              ]}
+                          >
+                            {formatTime(item)}
+                          </Text>
+                        </TouchableOpacity>
+                    );
+                  }}
+              />
+            </View>
+          </TouchableOpacity>
         </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
+      </Modal>
   );
 }
 
