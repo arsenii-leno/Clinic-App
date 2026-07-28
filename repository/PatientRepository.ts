@@ -15,19 +15,19 @@ export async function getAllPatients(): Promise<Patient[]> {
 export async function createPatient(input: PatientInput): Promise<Patient> {
   assertPatientInput(input);
 
-  // 1. Зберігаємо локально як Source of Truth
   const newPatient = await mutateCollection(PATIENTS_KEY, isPatient, (patients) => {
     const now = new Date().toISOString();
+
     const patient: Patient = {
       ...input,
       id: generateId('patient'),
       createdAt: now,
       updatedAt: now,
     };
+
     return { items: [...patients, patient], result: patient };
   });
 
-  // 2. Фонова синхронізація в Google Sheets (не блокує UI)
   sheetsRepository.savePatient(newPatient).catch((error) => {
     console.error('[Sync] Failed to sync new patient to Google Sheets:', error);
   });
@@ -35,20 +35,37 @@ export async function createPatient(input: PatientInput): Promise<Patient> {
   return newPatient;
 }
 
-export function updatePatient(id: string, input: PatientInput): Promise<Patient> {
+export async function updatePatient(id: string, input: PatientInput): Promise<Patient> {
   assertPatientInput(input);
-  return mutateCollection(PATIENTS_KEY, isPatient, (patients) => {
+
+  const updatedPatient = await mutateCollection(PATIENTS_KEY, isPatient, (patients) => {
     const index = patients.findIndex((patient) => patient.id === id);
-    if (index < 0) throw new Error('Patient not found.');
-    const patient = { ...patients[index], ...input, updatedAt: new Date().toISOString() };
+
+    if (index < 0) {
+      throw new Error('Patient not found.');
+    }
+
+    const patient = {
+      ...patients[index],
+      ...input,
+      updatedAt: new Date().toISOString(),
+    };
+
     const next = [...patients];
     next[index] = patient;
+
     return { items: next, result: patient };
   });
+
+  sheetsRepository.savePatient(updatedPatient).catch((error) => {
+    console.error('[Sync] Failed to update patient in Google Sheets:', error);
+  });
+
+  return updatedPatient;
 }
 
-export function deletePatient(id: string): Promise<void> {
-  return mutateCollection(PATIENTS_KEY, isPatient, (patients) => ({
+export async function deletePatient(id: string): Promise<void> {
+  await mutateCollection(PATIENTS_KEY, isPatient, (patients) => ({
     items: patients.filter((patient) => patient.id !== id),
     result: undefined,
   }));

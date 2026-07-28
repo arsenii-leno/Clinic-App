@@ -74,4 +74,11 @@ export class GoogleSheetsRepository {
   async saveAppointment(appointment: Appointment): Promise<void> {
     await this.request('saveAppointment', appointment);
   }
+
+  async deleteAppointment(id: string): Promise<void> {
+    await this.request('deleteAppointment', { id });
+  }
+  async deletePatient(id: string): Promise<void> {
+    await this.request('deletePatient', { id });
+  }
 }
