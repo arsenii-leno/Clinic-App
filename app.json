@@ -15,7 +15,12 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.clinicreception.app"
+      "bundleIdentifier": "com.clinicreception.app",
+      "buildNumber": "1.0.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSFaceIDUsageDescription": "Авторизація через Face ID для безпечного доступу до медичних даних пацієнтів."
+      }
     },
     "android": {
       "package": "com.clinicreception.app"
