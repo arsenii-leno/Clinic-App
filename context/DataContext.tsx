@@ -1,8 +1,9 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Appointment, AppointmentInput, Patient, PatientInput } from '@/models/types';
 import * as AppointmentRepository from '@/repository/AppointmentRepository';
 import * as PatientRepository from '@/repository/PatientRepository';
 import { compareAppointments, getTodayString, getTomorrowString } from '@/utils/dateUtils';
+import seedData from '../assets/seedPatients.json';
 
 interface DataContextValue {
   patients: Patient[];
@@ -41,21 +42,50 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
+  // Захист від подвійного виконання імпорту в React Strict Mode
+  const hasImported = useRef(false);
+
   const load = useCallback(async () => {
     console.log('[DataContext] Starting data load...');
     setLoading(true);
     setError(null);
     try {
       console.log('[DataContext] Fetching patients and appointments in parallel...');
-      const [nextPatients, nextAppointments] = await Promise.all([
+      let [nextPatients, nextAppointments] = await Promise.all([
         PatientRepository.getAllPatients(),
         AppointmentRepository.getAllAppointments(),
       ]);
+
+      // --- ТИМЧАСОВИЙ БЛОК ОДНОРАЗОВОГО ІМПОРТУ ---
+      if (!hasImported.current && nextPatients.length < 10) {
+        hasImported.current = true;
+        console.log('[DataContext] 🔄 Starting one-time seed contacts import...');
+
+        let successCount = 0;
+        for (const seedPatient of seedData) {
+          try {
+            await PatientRepository.createPatient({
+              firstName: seedPatient.firstName,
+              lastName: seedPatient.lastName,
+              childName: seedPatient.childName || '',
+              phone: seedPatient.phone,
+              notes: seedPatient.notes || '',
+            });
+            successCount++;
+          } catch (err) {
+            console.warn(`[DataContext] Could not import patient ${seedPatient.firstName} ${seedPatient.lastName}:`, err);
+          }
+        }
+
+        console.log(`[DataContext] ✅ Imported ${successCount} of ${seedData.length} contacts! Re-fetching data...`);
+        // Перечитуємо збережених пацієнтів разом з імпортованими
+        nextPatients = await PatientRepository.getAllPatients();
+      }
+      // --- КІНЕЦЬ БЛОКУ ІМПОРТУ ---
+
       console.log('[DataContext] Load complete:', {
         patientCount: nextPatients.length,
         appointmentCount: nextAppointments.length,
-        patients: nextPatients,
-        appointments: nextAppointments,
       });
       setPatients(nextPatients);
       setAppointments(sortAppointments(nextAppointments));
@@ -100,7 +130,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   const editAppointment = useCallback(async (id: string, data: AppointmentInput) => {
     const appointment = await AppointmentRepository.updateAppointment(id, data);
     setAppointments((current) =>
-      sortAppointments(current.map((item) => (item.id === id ? appointment : item))),
+        sortAppointments(current.map((item) => (item.id === id ? appointment : item))),
     );
     return appointment;
   }, []);
@@ -111,23 +141,23 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const patientById = useMemo(
-    () => new Map(patients.map((patient) => [patient.id, patient])),
-    [patients],
+      () => new Map(patients.map((patient) => [patient.id, patient])),
+      [patients],
   );
 
   const value = useMemo<DataContextValue>(() => {
     const getPatientById = (id: string) => patientById.get(id);
     const getAppointmentsByPatient = (patientId: string) =>
-      appointments.filter((appointment) => appointment.patientId === patientId);
+        appointments.filter((appointment) => appointment.patientId === patientId);
     const getAppointmentsByDate = (date: string) =>
-      appointments.filter((appointment) => appointment.date === date);
+        appointments.filter((appointment) => appointment.date === date);
     const searchPatients = (query: string) => {
       const normalizedQuery = normalizeQuery(query);
       if (!normalizedQuery) return [];
       return patients.filter((patient) =>
-        [patient.firstName, patient.lastName, patient.childName, patient.phone].some((value) =>
-          value.toLocaleLowerCase().includes(normalizedQuery),
-        ),
+          [patient.firstName, patient.lastName, patient.childName, patient.phone].some((value) =>
+              value.toLocaleLowerCase().includes(normalizedQuery),
+          ),
       );
     };
     const searchAppointments = (query: string) => {
