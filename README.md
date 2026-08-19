@@ -30,3 +30,6 @@ git clone [https://github.com/arsenii-leno/Clinic-App.git](https://github.com/ar
 cd Clinic-App
 npm install
 npm run dev
+
+📄 License
+Proprietary © 2026 Arsenii Leno
