@@ -1,30 +1,32 @@
-# Clinic Reception
+# 📋 Clinic-App — Practice Management & Clinical Workflow System
 
-A local-first Expo application for managing clinic patients and appointments.
+**Status:** 🛠️ Functional Prototype | **Stack:** TypeScript + React | **Type Safety:** Full-Stack
 
-## Requirements
+A modular healthcare workflow application tailored for medical practitioners to handle patient documentation, appointment queues, and structured clinical visit records.
 
-- Node.js 20 LTS or later
-- pnpm 9 or later
-- Xcode (for iOS) or Android Studio (for Android), when running native simulators
+---
 
-## Run locally
+## 🚀 Core Features
 
-```sh
-pnpm install
-pnpm start
-```
+- **Patient Directory:** Centralized registry for personal, demographic, and contact information.
+- **Visit Records:** Structured chronological visit logging and diagnosis tracking.
+- **State Architecture:** Predictable local-first persistence with strict TypeScript interface typing.
+- **Responsive UI:** Clean interface designed for rapid daily data entry during patient consultations.
 
-Use `pnpm ios`, `pnpm android`, or `pnpm web` to open a platform directly.
+---
 
-## Quality checks
+## 🛠️ Tech Stack
 
-```sh
-pnpm typecheck
-pnpm format
-pnpm build
-```
+- **Frontend:** React, TypeScript, Tailwind CSS / CSS Modules
+- **State & Data:** Modular stores with localStorage / relational backend compatibility
+- **Build Tool:** Vite
 
-## Data and security
+---
 
-Patient and appointment data is stored locally on the device with AsyncStorage. It is not encrypted and should only be used on managed, access-controlled devices. Do not place service-account JSON, Telegram tokens, API keys, or other credentials in the app or in `EXPO_PUBLIC_*` variables. Future integrations must use an authenticated backend and short-lived user/session tokens.
+## 🚀 Quickstart
+
+```bash
+git clone [https://github.com/arsenii-leno/Clinic-App.git](https://github.com/arsenii-leno/Clinic-App.git)
+cd Clinic-App
+npm install
+npm run dev
